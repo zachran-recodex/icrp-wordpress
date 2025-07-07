@@ -1,6 +1,6 @@
 <?php
 /**
- * Single post template file.
+ * Page template file.
  *
  * @package TailPress
  */
@@ -12,7 +12,11 @@ ob_start();
 
 <?php if (have_posts()): ?>
     <?php while (have_posts()): the_post(); ?>
-        <?php get_template_part('template-parts/content', 'single'); ?>
+        <article id="post-<?php the_ID(); ?>" <?php post_class('prose max-w-none'); ?>>
+            <div class="entry-content">
+                <?php the_content(); ?>
+            </div>
+        </article>
 
         <?php if (comments_open() || get_comments_number()): ?>
             <?php comments_template(); ?>

@@ -1,26 +1,35 @@
-<!DOCTYPE html>
-<html <?php language_attributes(); ?> class="no-js">
-<head>
-	<meta charset="<?php bloginfo( 'charset' ); ?>">
-	<meta name="viewport" content="width=device-width">
-	<link rel="profile" href="http://gmpg.org/xfn/11">
+<?php
+/**
+ * 404 page template.
+ *
+ * @package TailPress
+ */
 
-	<?php wp_head(); ?>
-</head>
-<body class="antialiased">
-	<div class="md:flex min-h-screen">
-		<div class="w-full md:w-1/2 flex items-center justify-center">
-			<div class="max-w-sm m-8">
-				<div class="text-5xl md:text-15xl text-dark border-light border-b">404</div>
-				<div class="w-16 h-1 bg-purple-light my-3 md:my-6"></div>
-				<p class="text-dark/90 text-2xl md:text-3xl font-light leading-relaxed mb-8"><?php _e( 'Sorry, the page you are looking for could not be found.', 'tailpress' ); ?></p>
-				<a href="<?php echo get_bloginfo( 'url' ); ?>" class="inline-flex rounded-full px-4 py-1.5 text-sm font-semibold transition bg-dark text-white hover:bg-dark/90 !no-underline">
-					<?php _e( 'Go Home', 'tailpress' ); ?>
-				</a>
-			</div>
-		</div>
-	</div>
+require_once get_template_directory() . '/layout.php';
 
-    <?php wp_footer(); ?>
-</body>
-</html>
+ob_start();
+?>
+
+<div class="text-center py-24">
+    <h1 class="text-6xl font-bold text-zinc-900 mb-4">404</h1>
+    <h2 class="text-2xl font-semibold text-zinc-700 mb-4">
+        <?php _e('Page Not Found', 'tailpress'); ?>
+    </h2>
+    <p class="text-zinc-600 mb-8">
+        <?php _e('Sorry, the page you are looking for could not be found.', 'tailpress'); ?>
+    </p>
+    <a href="<?php echo home_url(); ?>" class="inline-flex rounded-full px-4 py-1.5 text-sm font-semibold transition bg-dark text-white hover:bg-dark/90 !no-underline">
+        <?php _e('Go Home', 'tailpress'); ?>
+    </a>
+</div>
+
+<?php
+$content = ob_get_clean();
+
+$layout_args = [
+    'show_breadcrumbs' => true,
+    'page_title' => __('Page Not Found', 'tailpress'),
+    'page_description' => __('The page you are looking for could not be found.', 'tailpress'),
+];
+
+icrp_layout($content, $layout_args);

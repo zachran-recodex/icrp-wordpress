@@ -20,7 +20,7 @@
 <div id="page" class="min-h-screen flex flex-col">
     <?php do_action('tailpress_header'); ?>
 
-    <header class="container mx-auto py-6">
+    <header class="container mx-auto py-6" x-data="navigation">
         <div class="md:flex md:justify-between md:items-center">
             <div class="flex justify-between items-center">
                 <div>
@@ -40,17 +40,41 @@
                 </div>
 
                 <?php if (has_nav_menu('primary')): ?>
-                    <div class="md:hidden">
-                        <button type="button" aria-label="Toggle navigation" id="primary-menu-toggle">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <div class="md:hidden flex items-center gap-2">
+                        <!-- Search Toggle -->
+                        <button type="button" 
+                                aria-label="Toggle search" 
+                                @click="$dispatch('search-toggle')"
+                                class="p-2 text-zinc-600 hover:text-zinc-900 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                            </svg>
+                        </button>
+                        
+                        <!-- Menu Toggle -->
+                        <button type="button" 
+                                aria-label="Toggle navigation" 
+                                @click="toggle"
+                                class="p-2 text-zinc-600 hover:text-zinc-900 transition-colors">
+                            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                            <svg x-show="open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
                 <?php endif; ?>
             </div>
 
-            <div id="primary-navigation" class="hidden md:flex md:bg-transparent gap-6 items-center border border-light md:border-none rounded-xl p-4 md:p-0">
+            <div x-show="open || window.innerWidth >= 768" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="mt-4 md:mt-0 md:flex md:bg-transparent gap-6 items-center bg-white border border-light md:border-none rounded-xl p-4 md:p-0 shadow-lg md:shadow-none">
                 <nav>
                     <?php if (current_user_can('administrator') && !has_nav_menu('primary')): ?>
                         <a href="<?php echo esc_url(admin_url('nav-menus.php')); ?>" class="text-sm text-zinc-600"><?php esc_html_e('Edit Menus', 'tailpress'); ?></a>
@@ -59,19 +83,84 @@
                         wp_nav_menu([
                             'container_id'    => 'primary-menu',
                             'container_class' => '',
-                            'menu_class'      => 'md:flex md:-mx-4 [&_a]:!no-underline',
+                            'menu_class'      => 'flex flex-col md:flex-row md:-mx-4 [&_a]:!no-underline [&_a]:py-2 [&_a]:px-4 [&_a]:block [&_a]:transition-colors [&_a]:hover:text-primary',
                             'theme_location'  => 'primary',
-                            'li_class'        => 'md:mx-4',
+                            'li_class'        => 'md:mx-2',
                             'fallback_cb'     => false,
                         ]);
                         ?>
                     <?php endif; ?>
                 </nav>
 
-                <div class="inline-block mt-4 md:mt-0"><?php get_search_form(); ?></div>
+                <div class="hidden md:block mt-4 md:mt-0">
+                    <button type="button" 
+                            aria-label="Toggle search" 
+                            @click="$dispatch('search-toggle')"
+                            class="p-2 text-zinc-600 hover:text-zinc-900 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
+
+    <!-- Global Search Modal -->
+    <div x-data="search" 
+         @search-toggle.window="toggle"
+         @keydown.escape.window="close"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
+         style="display: none;">
+        
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-black/50" @click="close"></div>
+        
+        <!-- Search Modal -->
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-auto"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <form @submit.prevent="submit" class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-zinc-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                    <input type="text" 
+                           x-model="query"
+                           x-ref="searchInput"
+                           placeholder="<?php _e('Search...', 'tailpress'); ?>"
+                           class="flex-1 text-lg placeholder-zinc-400 border-none outline-none">
+                    <button type="button" 
+                            @click="close"
+                            class="text-zinc-400 hover:text-zinc-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="border-t border-zinc-200 pt-4">
+                    <p class="text-sm text-zinc-500 mb-2"><?php _e('Press Enter to search', 'tailpress'); ?></p>
+                    <div class="flex items-center gap-2 text-xs text-zinc-400">
+                        <kbd class="px-2 py-1 bg-zinc-100 rounded">ESC</kbd>
+                        <span><?php _e('to close', 'tailpress'); ?></span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="content" class="site-content grow">
         <?php if (is_front_page()): ?>
